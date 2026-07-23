@@ -124,114 +124,25 @@ st.sidebar.title("🎛️ Control Panel")
 
 import urllib.request
 
-# Find available models & Auto-download from GitHub Release if missing
+# Find available models
 os.makedirs('models', exist_ok=True)
-
-# Check local models first
 available_models = glob.glob("models/*.keras") + glob.glob("models/*.hdf5") + glob.glob("models/*.h5")
 
 # Agar Streamlit Cloud par model nahi mila, to GitHub Release se download karein
 if not available_models:
-    # ⚠️ Apne Release page par uploaded file par Right-Click karke "Copy Link Address" wala URL yahan paste karein:
-    RELEASE_MODEL_URL = "https://github.com/hamidlakhan777/CodeAlpha_Task03/releases/download/v1.0/https://github.com/hamidlakhan777/CodeAlpha_Task03/releases
-    DESTINATION_PATH = "models/model_from_release.keras"
+    # Neeche quotes ke andar Step 1 wala copied link paste karein
+    RELEASE_MODEL_URL = "https://github.com/hamidlakhan777/CodeAlpha_Task03/releases/download/v1.0/https://github.com/hamidlakhan777/CodeAlpha_Task03/releases/download/v1.0/weights-improvement-17-3.3950-bigger.keras"
+    DESTINATION_PATH = "models/model_best.keras"
     
-    with st.sidebar.status("Downloading AI Model from GitHub Releases...", expanded=True) as status:
+    with st.sidebar.status("Downloading AI Model...", expanded=True) as status:
         try:
             urllib.request.urlretrieve(RELEASE_MODEL_URL, DESTINATION_PATH)
             status.update(label="Model Downloaded Successfully! 🎉", state="complete")
-            # Refresh available models list after download
             available_models = glob.glob("models/*.keras") + glob.glob("models/*.hdf5") + glob.glob("models/*.h5")
         except Exception as e:
             status.update(label=f"Download failed: {e}", state="error")
 
-# Selectbox dropdown
 model_choice = st.sidebar.selectbox("Brain (Model)", available_models if available_models else ["No models found"])
-
-seq_length = st.sidebar.slider("Sequence Length", min_value=50, max_value=500, value=100, step=10)
-temperature = st.sidebar.slider("Creativity (Temperature)", min_value=0.1, max_value=2.0, value=1.0, step=0.1)
-
-st.sidebar.markdown("---")
-st.sidebar.info("Upload dataset, run `train.py` to get custom models.")
-
-# Main content
-col1, col2 = st.columns([1, 2])
-
-with col1:
-    st.markdown("#### Ready to synthesize?")
-    if st.button("🚀 GENERATE MUSIC"):
-        if not available_models:
-            st.error("No trained models found! Please run train.py first.")
-        else:
-            with st.spinner("Synthesizing Audio..."):
-                # Add pulsing visualizer while generating
-                st.markdown("""
-                <div class="soundwave-container">
-                    <div class="bar"></div><div class="bar"></div>
-                    <div class="bar"></div><div class="bar"></div>
-                    <div class="bar"></div>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                try:
-                    # Generate the music
-                    output_file = f"outputs/generated_{int(time.time())}.mid"
-                    generate_music(model_choice, num_generate=seq_length, temperature=temperature)
-                    
-                    # Assuming generator always saves to outputs/output.mid currently, let's rename it
-                    if os.path.exists('outputs/output.mid'):
-                        os.rename('outputs/output.mid', output_file)
-                    
-                    st.session_state['last_generated'] = output_file
-                    st.success("Sequence successfully generated!")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Generation failed: {e}")
-
-with col2:
-    if 'last_generated' in st.session_state and os.path.exists(st.session_state['last_generated']):
-        midi_file = st.session_state['last_generated']
-        st.markdown("#### 🎧 Playback & Visualizer")
-        
-        midi_base64 = get_base64_of_file(midi_file)
-        data_uri = f"data:audio/midi;base64,{midi_base64}"
-        
-        # HTML5 MIDI Player by Magenta
-        player_html = f"""
-        <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/focus-visible@5,npm/html-midi-player@1.4.0"></script>
-        
-        <style>
-            midi-player {{
-                display: block;
-                width: 100%;
-                margin: 10px 0;
-            }}
-            midi-visualizer {{
-                display: block;
-                width: 100%;
-                height: 300px;
-                background-color: #1a1a2e;
-                border: 2px solid #00f3ff;
-                border-radius: 10px;
-                box-shadow: 0 0 15px #00f3ff;
-            }}
-        </style>
-        
-        <midi-visualizer type="piano-roll" id="myVisualizer"></midi-visualizer>
-        <midi-player
-          src="{data_uri}"
-          sound-font visualizer="#myVisualizer">
-        </midi-player>
-        """
-        
-        components.html(player_html, height=400)
-        
-        # Download button
-        with open(midi_file, "rb") as f:
-            st.download_button(
-                label="💾 DOWNLOAD MIDI",
-                data=f,
-                file_name=os.path.basename(midi_file),
                 mime="audio/midi"
             )
     else:
