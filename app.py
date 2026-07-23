@@ -5,6 +5,7 @@ import base64
 import time
 from generator import generate_music
 import glob
+import urllib.request
 
 # Must be the first Streamlit command
 st.set_page_config(page_title="SonifyAI - Music Generator", page_icon="🎵", layout="wide")
@@ -122,18 +123,16 @@ st.markdown("---")
 # Sidebar Controls
 st.sidebar.title("🎛️ Control Panel")
 
-# Find available models
+# Find available models & Auto-download if missing
 os.makedirs('models', exist_ok=True)
 available_models = glob.glob("models/*.keras") + glob.glob("models/*.hdf5") + glob.glob("models/*.h5")
 
-# Auto-download model from GitHub Release if no local model found
 if not available_models:
     url = "https://github.com/hamidlakhan777/CodeAlpha_Task03/releases/download/v1.0/weights-improvement-05-4.3197-bigger.keras"
     dest = "models/weights-improvement-05-4.3197-bigger.keras"
     
     with st.sidebar.status("Downloading AI Model...", expanded=True) as status:
         try:
-            import urllib.request
             urllib.request.urlretrieve(url, dest)
             status.update(label="Model Downloaded Successfully! 🎉", state="complete")
             available_models = glob.glob("models/*.keras") + glob.glob("models/*.hdf5") + glob.glob("models/*.h5")
@@ -141,3 +140,88 @@ if not available_models:
             status.update(label=f"Download failed: {e}", state="error")
 
 model_choice = st.sidebar.selectbox("Brain (Model)", available_models if available_models else ["No models found"])
+
+seq_length = st.sidebar.slider("Sequence Length", min_value=50, max_value=500, value=100, step=10)
+temperature = st.sidebar.slider("Creativity (Temperature)", min_value=0.1, max_value=2.0, value=1.0, step=0.1)
+
+st.sidebar.markdown("---")
+st.sidebar.info("Upload dataset, run `train.py` to get custom models.")
+
+# Main content layout (Generate button & Playback)
+col1, col2 = st.columns([1, 2])
+
+with col1:
+    st.markdown("#### Ready to synthesize?")
+    if st.button("🚀 GENERATE MUSIC"):
+        if not available_models or model_choice == "No models found":
+            st.error("No trained models found!")
+        else:
+            with st.spinner("Synthesizing Audio..."):
+                st.markdown("""
+                <div class="soundwave-container">
+                    <div class="bar"></div><div class="bar"></div>
+                    <div class="bar"></div><div class="bar"></div>
+                    <div class="bar"></div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                try:
+                    os.makedirs('outputs', exist_ok=True)
+                    output_file = f"outputs/generated_{int(time.time())}.mid"
+                    generate_music(model_choice, num_generate=seq_length, temperature=temperature)
+                    
+                    if os.path.exists('outputs/output.mid'):
+                        os.rename('outputs/output.mid', output_file)
+                    
+                    st.session_state['last_generated'] = output_file
+                    st.success("Sequence successfully generated!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Generation failed: {e}")
+
+with col2:
+    if 'last_generated' in st.session_state and os.path.exists(st.session_state['last_generated']):
+        midi_file = st.session_state['last_generated']
+        st.markdown("#### 🎧 Playback & Visualizer")
+        
+        midi_base64 = get_base64_of_file(midi_file)
+        data_uri = f"data:audio/midi;base64,{midi_base64}"
+        
+        player_html = f"""
+        <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/focus-visible@5,npm/html-midi-player@1.4.0"></script>
+        
+        <style>
+            midi-player {{
+                display: block;
+                width: 100%;
+                margin: 10px 0;
+            }}
+            midi-visualizer {{
+                display: block;
+                width: 100%;
+                height: 300px;
+                background-color: #1a1a2e;
+                border: 2px solid #00f3ff;
+                border-radius: 10px;
+                box-shadow: 0 0 15px #00f3ff;
+            }}
+        </style>
+        
+        <midi-visualizer type="piano-roll" id="myVisualizer"></midi-visualizer>
+        <midi-player
+          src="{data_uri}"
+          sound-font visualizer="#myVisualizer">
+        </midi-player>
+        """
+        
+        components.html(player_html, height=400)
+        
+        with open(midi_file, "rb") as f:
+            st.download_button(
+                label="💾 DOWNLOAD MIDI",
+                data=f,
+                file_name=os.path.basename(midi_file),
+                mime="audio/midi"
+            )
+    else:
+        st.info("Your synthesized tracks will appear here.")
