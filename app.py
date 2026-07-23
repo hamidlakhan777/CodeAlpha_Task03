@@ -131,7 +131,7 @@ available_models = glob.glob("models/*.keras") + glob.glob("models/*.hdf5") + gl
 # Agar Streamlit Cloud par model nahi mila, to GitHub Release se download karein
 if not available_models:
     # Neeche quotes ke andar Step 1 wala copied link paste karein
-    RELEASE_MODEL_URL = "https://github.com/hamidlakhan777/CodeAlpha_Task03/releases/download/v1.0/https://github.com/hamidlakhan777/CodeAlpha_Task03/releases/download/v1.0/weights-improvement-17-3.3950-bigger.keras"
+    RELEASE_MODEL_URL = "https://github.com/hamidlakhan777/CodeAlpha_Task03/releases/download/v1.0/https://github.com/hamidlakhan777/CodeAlpha_Task03/blob/main/weights-improvement-05-4.3197-bigger.keras
     DESTINATION_PATH = "models/model_best.keras"
     
     with st.sidebar.status("Downloading AI Model...", expanded=True) as status:
