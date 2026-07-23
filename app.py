@@ -130,9 +130,8 @@ available_models = glob.glob("models/*.keras") + glob.glob("models/*.hdf5") + gl
 
 # Agar Streamlit Cloud par model nahi mila, to GitHub Release se download karein
 if not available_models:
-    # Neeche quotes ke andar Step 1 wala copied link paste karein
-    RELEASE_MODEL_URL = "https://github.com/hamidlakhan777/CodeAlpha_Task03/releases/download/v1.0/https://github.com/hamidlakhan777/CodeAlpha_Task03/blob/main/weights-improvement-05-4.3197-bigger.keras
-    DESTINATION_PATH = "models/model_best.keras"
+    RELEASE_MODEL_URL = "https://github.com/hamidlakhan777/CodeAlpha_Task03/releases/download/v1.0/weights-improvement-05-4.3197-bigger.keras"
+    DESTINATION_PATH = "models/weights-improvement-05-4.3197-bigger.keras"
     
     with st.sidebar.status("Downloading AI Model...", expanded=True) as status:
         try:
@@ -143,7 +142,5 @@ if not available_models:
             status.update(label=f"Download failed: {e}", state="error")
 
 model_choice = st.sidebar.selectbox("Brain (Model)", available_models if available_models else ["No models found"])
-                mime="audio/midi"
-            )
     else:
         st.info("Your synthesized tracks will appear here.")
