@@ -122,9 +122,30 @@ st.markdown("---")
 # Sidebar Controls
 st.sidebar.title("🎛️ Control Panel")
 
-# Find available models
+import urllib.request
+
+# Find available models & Auto-download from GitHub Release if missing
 os.makedirs('models', exist_ok=True)
+
+# Check local models first
 available_models = glob.glob("models/*.keras") + glob.glob("models/*.hdf5") + glob.glob("models/*.h5")
+
+# Agar Streamlit Cloud par model nahi mila, to GitHub Release se download karein
+if not available_models:
+    # ⚠️ Apne Release page par uploaded file par Right-Click karke "Copy Link Address" wala URL yahan paste karein:
+    RELEASE_MODEL_URL = "https://github.com/hamidlakhan777/CodeAlpha_Task03/releases/download/v1.0/https://github.com/hamidlakhan777/CodeAlpha_Task03/releases
+    DESTINATION_PATH = "models/model_from_release.keras"
+    
+    with st.sidebar.status("Downloading AI Model from GitHub Releases...", expanded=True) as status:
+        try:
+            urllib.request.urlretrieve(RELEASE_MODEL_URL, DESTINATION_PATH)
+            status.update(label="Model Downloaded Successfully! 🎉", state="complete")
+            # Refresh available models list after download
+            available_models = glob.glob("models/*.keras") + glob.glob("models/*.hdf5") + glob.glob("models/*.h5")
+        except Exception as e:
+            status.update(label=f"Download failed: {e}", state="error")
+
+# Selectbox dropdown
 model_choice = st.sidebar.selectbox("Brain (Model)", available_models if available_models else ["No models found"])
 
 seq_length = st.sidebar.slider("Sequence Length", min_value=50, max_value=500, value=100, step=10)
