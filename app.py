@@ -122,25 +122,22 @@ st.markdown("---")
 # Sidebar Controls
 st.sidebar.title("🎛️ Control Panel")
 
-import urllib.request
-
 # Find available models
 os.makedirs('models', exist_ok=True)
 available_models = glob.glob("models/*.keras") + glob.glob("models/*.hdf5") + glob.glob("models/*.h5")
 
-# Agar Streamlit Cloud par model nahi mila, to GitHub Release se download karein
+# Auto-download model from GitHub Release if no local model found
 if not available_models:
-    RELEASE_MODEL_URL = "https://github.com/hamidlakhan777/CodeAlpha_Task03/releases/download/v1.0/weights-improvement-05-4.3197-bigger.keras"
-    DESTINATION_PATH = "models/weights-improvement-05-4.3197-bigger.keras"
+    url = "https://github.com/hamidlakhan777/CodeAlpha_Task03/releases/download/v1.0/weights-improvement-05-4.3197-bigger.keras"
+    dest = "models/weights-improvement-05-4.3197-bigger.keras"
     
     with st.sidebar.status("Downloading AI Model...", expanded=True) as status:
         try:
-            urllib.request.urlretrieve(RELEASE_MODEL_URL, DESTINATION_PATH)
+            import urllib.request
+            urllib.request.urlretrieve(url, dest)
             status.update(label="Model Downloaded Successfully! 🎉", state="complete")
             available_models = glob.glob("models/*.keras") + glob.glob("models/*.hdf5") + glob.glob("models/*.h5")
         except Exception as e:
             status.update(label=f"Download failed: {e}", state="error")
 
 model_choice = st.sidebar.selectbox("Brain (Model)", available_models if available_models else ["No models found"])
-    else:
-        st.info("Your synthesized tracks will appear here.")
